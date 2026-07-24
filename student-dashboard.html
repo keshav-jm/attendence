@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Portal - Student Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #070a12;
+            --card-bg: rgba(16, 24, 40, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.4);
+            --accent-purple: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.3);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.25);
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.25);
+            --warning: #f59e0b;
+        }
+
+        body.light-mode {
+            --bg-dark: #f8fafc;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.08);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+        }
+
+        body.oled-mode {
+            --bg-dark: #000000;
+            --card-bg: rgba(12, 12, 12, 0.95);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 10% 0%, rgba(59, 130, 246, 0.18) 0%, transparent 40%),
+                radial-gradient(circle at 90% 40%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 100%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            background-attachment: fixed;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(7, 10, 18, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 3rem;
+            height: 76px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        body.light-mode .navbar { background: rgba(255, 255, 255, 0.85); }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.03em;
+        }
+
+        .brand-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 16px var(--primary-glow);
+        }
+
+        .brand span { color: var(--primary); }
+
+        .nav-links { display: flex; align-items: center; gap: 1.25rem; }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.25rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .nav-link.active {
+            border: 1px solid rgba(59, 130, 246, 0.35);
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(139, 92, 246, 0.1));
+            color: var(--text-main);
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.15);
+        }
+
+        /* Profile Side Trigger */
+        .profile-menu-container { position: relative; }
+
+        .profile-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 0.35rem 1.1rem 0.35rem 0.35rem;
+            border-radius: 999px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+        }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            padding: 2px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6, #10b981);
+            border-radius: 50%;
+        }
+
+        .avatar-circle {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #090e17;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .profile-meta-text { display: flex; flex-direction: column; text-align: left; }
+        .profile-name-inline { font-size: 0.88rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+        .profile-role-inline { font-size: 0.72rem; color: #60a5fa; font-weight: 700; }
+
+        .nav-unread-dot {
+            position: absolute; top: 0; right: 0; width: 10px; height: 10px;
+            background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-dark);
+            box-shadow: 0 0 10px var(--danger); display: none;
+        }
+        .nav-unread-dot.active { display: block; }
+
+        /* Dropdown Menu */
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 12px); right: 0; width: 280px;
+            background: rgba(12, 17, 29, 0.95); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;
+            padding: 0.75rem; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8), 0 0 30px rgba(59, 130, 246, 0.15);
+            display: none; flex-direction: column; gap: 0.35rem; z-index: 200;
+            animation: dropDownSlide 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        body.light-mode .profile-dropdown { background: rgba(255, 255, 255, 0.95); }
+        .profile-dropdown.active { display: flex; }
+
+        .dropdown-user-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.18), rgba(139, 92, 246, 0.15));
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px;
+            padding: 1rem; display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.35rem;
+        }
+
+        .banner-avatar {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #3b82f6, #8b5cf6); color: #ffffff;
+            font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .dropdown-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
+        .dropdown-role { font-size: 0.75rem; color: #60a5fa; font-weight: 700; margin-top: 1px; }
+
+        .dropdown-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.7rem 0.9rem; color: var(--text-muted); text-decoration: none;
+            font-size: 0.88rem; font-weight: 600; border-radius: 10px; transition: all 0.25s ease; cursor: pointer;
+        }
+
+        .dropdown-item-content { display: flex; align-items: center; gap: 0.75rem; }
+        .dropdown-item:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-main); transform: translateX(4px); }
+
+        .notif-badge-pill { background: var(--danger); color: white; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; }
+
+        .dropdown-item.logout { color: var(--danger); border-top: 1px solid rgba(255, 255, 255, 0.06); margin-top: 0.35rem; padding-top: 0.85rem; }
+        .dropdown-item.logout:hover { background: rgba(239, 68, 68, 0.1); }
+
+        @keyframes dropDownSlide {
+            from { opacity: 0; transform: translateY(-10px) scale(0.96); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Dashboard Container */
+        .dashboard-container { max-width: 1200px; margin: 2.5rem auto; padding: 0 1.5rem; }
+
+        .header-banner {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .greeting {
+            font-size: 2.35rem; font-weight: 800; letter-spacing: -0.04em;
+            background: linear-gradient(135deg, #ffffff 30%, #a5f3fc 70%, #818cf8 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        body.light-mode .greeting {
+            background: linear-gradient(135deg, #0f172a, #334155);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .user-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            padding: 0.65rem 1.3rem; border-radius: 999px;
+            font-size: 0.85rem; font-weight: 700; color: var(--text-muted);
+            display: flex; align-items: center; gap: 0.6rem;
+            backdrop-filter: blur(12px);
+        }
+
+        .status-dot {
+            width: 8px; height: 8px; background-color: var(--success);
+            border-radius: 50%; box-shadow: 0 0 12px var(--success);
+        }
+
+        /* GLOWING HERO OVERVIEW CARD */
+        .hero-overview {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border); border-radius: 28px;
+            padding: 2.25rem 2.75rem; display: flex; align-items: center;
+            justify-content: space-between; margin-bottom: 2rem;
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.6);
+            position: relative; overflow: hidden;
+        }
+
+        .hero-overview::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 6px; height: 100%;
+            background: linear-gradient(180deg, #10b981, #3b82f6, #8b5cf6);
+        }
+
+        .hero-overview::after {
+            content: ''; position: absolute; top: -50%; right: -10%; width: 250px; height: 250px;
+            background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .overview-title {
+            font-size: 0.85rem; font-weight: 800; color: var(--text-muted);
+            letter-spacing: 0.1em; text-transform: uppercase;
+        }
+
+        .overview-value {
+            font-size: 3.75rem; font-weight: 800; color: var(--success);
+            margin-top: 0.1rem; letter-spacing: -0.04em;
+            text-shadow: 0 0 30px var(--success-glow);
+        }
+
+        .overview-meta { color: var(--text-muted); font-size: 0.95rem; margin-top: 0.3rem; font-weight: 500; }
+
+        /* CIRCULAR PROGRESS WIDGET */
+        .radial-progress-wrapper {
+            position: relative;
+            width: 90px;
+            height: 90px;
+        }
+
+        .radial-progress-wrapper svg {
+            transform: rotate(-90deg);
+            width: 100%;
+            height: 100%;
+        }
+
+        /* METRICS CARDS GRID */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 1.85rem;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-6px) scale(1.01);
+            border-color: rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 20px rgba(59, 130, 246, 0.15);
+        }
+
+        .card-header-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .card-label { font-size: 0.85rem; font-weight: 800; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        .metric-value {
+            font-size: 2.85rem; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1.1rem;
+        }
+
+        .text-success { color: var(--success); text-shadow: 0 0 20px var(--success-glow); }
+        .text-danger { color: var(--danger); text-shadow: 0 0 20px var(--danger-glow); }
+
+        .progress-bar { width: 100%; height: 8px; background: rgba(255, 255, 255, 0.06); border-radius: 999px; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 999px; transition: width 1s cubic-bezier(0.16, 1, 0.3, 1); }
+        
+        .bg-success { background: linear-gradient(90deg, #059669, #10b981); }
+        .bg-danger { background: linear-gradient(90deg, #dc2626, #ef4444); }
+
+        .badge-danger {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            background: var(--danger-glow); color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.35); font-size: 0.75rem;
+            font-weight: 700; padding: 0.4rem 0.9rem; border-radius: 999px; margin-top: 1.25rem;
+        }
+
+        /* SMART PREDICTION ALERT BANNER */
+        .alert-box {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(245, 158, 11, 0.05));
+            border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 24px;
+            padding: 1.75rem 2.25rem; display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 2rem; box-shadow: 0 15px 35px -10px rgba(239, 68, 68, 0.2);
+            backdrop-filter: blur(16px);
+        }
+
+        .alert-info { display: flex; align-items: center; gap: 1.25rem; }
+        
+        .alert-icon {
+            width: 52px; height: 52px; background: rgba(239, 68, 68, 0.18);
+            border-radius: 16px; display: flex; align-items: center; justify-content: center;
+            color: var(--danger); flex-shrink: 0; box-shadow: 0 0 15px var(--danger-glow);
+        }
+
+        .alert-title { font-size: 1.05rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.25rem; }
+        .alert-desc { font-size: 0.92rem; color: #fca5a5; font-weight: 500; }
+
+        .prediction-badge {
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: white; font-weight: 800; padding: 0.9rem 1.6rem;
+            border-radius: 14px; font-size: 0.95rem; white-space: nowrap;
+            box-shadow: 0 8px 20px var(--danger-glow);
+        }
+
+        /* GRAPH CARD */
+        .chart-card {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border); border-radius: 28px; padding: 2.25rem;
+            margin-bottom: 2rem; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5);
+        }
+
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.75rem; }
+        .chart-legend-pills { display: flex; gap: 1rem; }
+
+        .pill {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 0.85rem; font-weight: 700; color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--card-border);
+            padding: 0.45rem 1rem; border-radius: 999px;
+        }
+
+        .pill-dot { width: 8px; height: 8px; border-radius: 50%; }
+        .chart-wrapper { position: relative; height: 320px; width: 100%; }
+
+        /* ATTENDANCE HISTORY LOG CARD */
+        .history-card {
+            background: var(--card-bg); backdrop-filter: blur(20px);
+            border: 1px solid var(--card-border); border-radius: 28px; padding: 2.25rem;
+            box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); margin-bottom: 2rem;
+        }
+
+        .history-controls {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+        }
+
+        .search-box {
+            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--card-border);
+            border-radius: 12px; padding: 0.6rem 1rem; color: var(--text-main);
+            font-size: 0.88rem; outline: none; width: 220px;
+        }
+
+        .filter-select {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid var(--card-border);
+            color: var(--text-main); padding: 0.6rem 1rem; border-radius: 12px;
+            font-size: 0.88rem; font-weight: 700; outline: none; cursor: pointer;
+        }
+
+        .filter-select option { background: #0b0f19; color: #ffffff; }
+
+        .history-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .history-table th { color: var(--text-muted); font-size: 0.8rem; font-weight: 800; text-transform: uppercase; padding: 1.1rem; border-bottom: 1px solid var(--card-border); }
+        .history-table td { padding: 1.1rem; font-size: 0.92rem; border-bottom: 1px solid rgba(255, 255, 255, 0.03); font-weight: 600; }
+        .history-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+        .badge-present { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+        .badge-absent { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+        .badge-od { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.75rem; font-weight: 800; }
+
+        /* MODALS */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(7, 10, 18, 0.85);
+            backdrop-filter: blur(10px); display: flex; align-items: center;
+            justify-content: center; z-index: 300; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            background: rgba(15, 23, 42, 0.95); border: 1px solid var(--card-border);
+            border-radius: 28px; padding: 2.5rem; max-width: 520px; width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8); transform: translateY(20px);
+            transition: transform 0.3s ease; max-height: 85vh; display: flex; flex-direction: column;
+        }
+
+        body.light-mode .modal-card { background: #ffffff; }
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.35rem; font-weight: 800; color: var(--text-main); }
+        .modal-close { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
+
+        .notif-modal-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+        .btn-mark-all { background: transparent; border: none; color: var(--primary); font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+
+        .notif-list { overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+        .notif-item { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 16px; padding: 1rem; display: flex; gap: 1rem; cursor: pointer; position: relative; }
+        .notif-item.unread { border-color: rgba(59, 130, 246, 0.35); background: rgba(59, 130, 246, 0.06); }
+
+        .notif-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .notif-icon.alert { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .notif-icon.academic { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
+
+        .notif-title { font-size: 0.9rem; font-weight: 800; color: var(--text-main); margin-bottom: 0.2rem; }
+        .notif-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.4rem; }
+        .notif-time { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; }
+        .unread-indicator { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; position: absolute; top: 1rem; right: 1rem; }
+
+        .form-group { margin-bottom: 1.25rem; }
+        .form-label { display: block; font-size: 0.82rem; font-weight: 800; color: var(--text-muted); margin-bottom: 0.4rem; text-transform: uppercase; }
+        .form-input, .form-select { width: 100%; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--card-border); border-radius: 12px; padding: 0.8rem 1rem; color: var(--text-main); font-size: 0.92rem; outline: none; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .slider-container { display: flex; align-items: center; gap: 1rem; }
+        .slider-val { font-size: 1.1rem; font-weight: 800; color: var(--primary); min-width: 45px; }
+
+        .modal-actions { display: flex; gap: 1rem; margin-top: 1.75rem; }
+        .btn-save { flex: 1; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 0.85rem; border-radius: 12px; font-weight: 800; cursor: pointer; box-shadow: 0 4px 15px var(--primary-glow); }
+        .btn-cancel { flex: 1; background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--card-border); padding: 0.85rem; border-radius: 12px; font-weight: 800; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navbar -->
+    <nav class="navbar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="22" height="22" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+            </div>
+            Academic<span>Portal</span>
+        </div>
+        
+        <div class="nav-links">
+            <a href="student-dashboard.html" class="nav-link active">Student Dashboard</a>
+            
+            <div class="profile-menu-container">
+                <button class="profile-btn" onclick="toggleProfileMenu()">
+                    <div class="avatar-wrapper">
+                        <div class="avatar-circle" id="navAvatar">S</div>
+                        <span class="nav-unread-dot" id="unreadDot"></span>
+                    </div>
+                    <div class="profile-meta-text">
+                        <span class="profile-name-inline" id="btnNameInline">Sunil</span>
+                        <span class="profile-role-inline" id="btnRoleInline">CCE • Sec A</span>
+                    </div>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-user-banner">
+                        <div class="banner-avatar" id="bannerAvatar">S</div>
+                        <div>
+                            <div class="dropdown-name" id="menuName">Sunil</div>
+                            <div class="dropdown-role" id="menuId">ST10294 • Student</div>
+                        </div>
+                    </div>
+
+                    <a class="dropdown-item" onclick="openProfileModal()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            Profile Settings
+                        </div>
+                    </a>
+                    <a class="dropdown-item" onclick="openPreferencesModal()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Preferences
+                        </div>
+                    </a>
+                    <a class="dropdown-item" onclick="openNotificationsModal()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            Notifications
+                        </div>
+                        <span class="notif-badge-pill" id="menuNotifBadge">0</span>
+                    </a>
+                    <a class="dropdown-item logout" onclick="logout()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            Log Out
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Edit Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Edit Profile Settings</div>
+                <button class="modal-close" onclick="closeProfileModal()">✕</button>
+            </div>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="editName" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Register Student ID</label>
+                        <input type="text" id="editId" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Section</label>
+                        <input type="text" id="editSection" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department / Program</label>
+                    <input type="text" id="editDept" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="editEmail" class="form-input" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preferences Modal -->
+    <div class="modal-overlay" id="preferencesModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Preferences & Settings</div>
+                <button class="modal-close" onclick="closePreferencesModal()">✕</button>
+            </div>
+            <form id="preferencesForm">
+                <div class="form-group">
+                    <label class="form-label">Attendance Target Threshold (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="prefTarget" min="60" max="90" step="1" class="form-input" oninput="document.getElementById('targetValDisplay').innerText = this.value + '%'">
+                        <span class="slider-val" id="targetValDisplay">75%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Portal Theme Mode</label>
+                    <select id="prefTheme" class="form-select">
+                        <option value="dark">Dark Glass (Default)</option>
+                        <option value="light">Light Mode</option>
+                        <option value="oled">OLED Black Mode</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closePreferencesModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notificationsModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Notifications</div>
+                <button class="modal-close" onclick="closeNotificationsModal()">✕</button>
+            </div>
+            <div class="notif-modal-actions">
+                <span style="font-size: 0.85rem; color: var(--text-muted);" id="unreadCountText">0 Unread Alerts</span>
+                <button class="btn-mark-all" onclick="markAllNotificationsRead()">Mark all as read</button>
+            </div>
+            <div class="notif-list" id="notificationsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="dashboard-container">
+        <div class="header-banner">
+            <h1 class="greeting" id="studentGreeting">Welcome Sunil</h1>
+            <div class="user-chip" id="studentChip">
+                <span class="status-dot"></span> ST10294 • Active Student
+            </div>
+        </div>
+
+        <!-- Glowing Hero Overview -->
+        <div class="hero-overview">
+            <div>
+                <div class="overview-title">Overall Attendance Performance</div>
+                <div class="overview-value" id="overallVal">82%</div>
+                <div class="overview-meta">Good Standing • Meets minimum academic criteria across subjects.</div>
+            </div>
+            <div class="radial-progress-wrapper">
+                <svg viewBox="0 0 36 36">
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="rgba(255, 255, 255, 0.08)" stroke-width="3" />
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" id="circleStroke" fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="82, 100" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="metrics-grid" id="subjectGrid"></div>
+
+        <!-- Prediction Alert -->
+        <div id="alertSection"></div>
+
+        <!-- Analytics Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <div class="card-label">Attendance Trend Analytics</div>
+                <div class="chart-legend-pills">
+                    <div class="pill"><span class="pill-dot" style="background: #10b981;"></span> Overall Average</div>
+                    <div class="pill"><span class="pill-dot" style="background: #ef4444;"></span> Java (Critical)</div>
+                </div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="trendChart"></canvas>
+            </div>
+        </div>
+
+        <!-- History Log Section with Search & Filter -->
+        <div class="history-card">
+            <div class="history-controls">
+                <div class="card-label" style="font-size: 1rem;">Detailed Attendance History</div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <input type="text" id="searchInput" class="search-box" placeholder="Search subject or status..." onkeyup="filterHistory()">
+                    <select class="filter-select" id="subjectFilter" onchange="filterHistory()">
+                        <option value="ALL">All Subjects</option>
+                        <option value="Operating Systems">Operating Systems</option>
+                        <option value="DBMS">DBMS</option>
+                        <option value="Java">Java</option>
+                    </select>
+                </div>
+            </div>
+
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Subject</th>
+                        <th>Time Slot</th>
+                        <th>Faculty</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        // ROUTE GUARD
+        (function checkAuth() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const userRole = localStorage.getItem('userRole');
+
+            if (!isLoggedIn || isLoggedIn !== 'true') {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (userRole === 'teacher') {
+                window.location.href = 'faculty-dashboard.html';
+                return;
+            }
+        })();
+
+        function toggleProfileMenu() {
+            document.getElementById('profileDropdown').classList.toggle('active');
+        }
+
+        window.addEventListener('click', function(e) {
+            const container = document.querySelector('.profile-menu-container');
+            if (container && !container.contains(e.target)) {
+                document.getElementById('profileDropdown').classList.remove('active');
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        function openProfileModal() {
+            document.getElementById('profileDropdown').classList.remove('active');
+            document.getElementById('editName').value = studentData.name;
+            document.getElementById('editId').value = studentData.id;
+            document.getElementById('editDept').value = studentData.dept;
+            document.getElementById('editSection').value = studentData.section;
+            document.getElementById('editEmail').value = studentData.email;
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            studentData.name = document.getElementById('editName').value.trim();
+            studentData.id = document.getElementById('editId').value.trim().toUpperCase();
+            studentData.dept = document.getElementById('editDept').value.trim();
+            studentData.section = document.getElementById('editSection').value.trim();
+            studentData.email = document.getElementById('editEmail').value.trim();
+
+            localStorage.setItem('userId', studentData.id);
+            localStorage.setItem('userName', studentData.name);
+
+            updateProfileUI();
+            closeProfileModal();
+        });
+
+        function openPreferencesModal() {
+            document.getElementById('profileDropdown').classList.remove('active');
+            document.getElementById('prefTarget').value = studentData.targetThreshold;
+            document.getElementById('targetValDisplay').innerText = studentData.targetThreshold + '%';
+            document.getElementById('prefTheme').value = studentData.theme;
+            document.getElementById('preferencesModal').classList.add('active');
+        }
+
+        function closePreferencesModal() {
+            document.getElementById('preferencesModal').classList.remove('active');
+        }
+
+        document.getElementById('preferencesForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            studentData.targetThreshold = parseInt(document.getElementById('prefTarget').value);
+            studentData.theme = document.getElementById('prefTheme').value;
+
+            localStorage.setItem('prefTarget', studentData.targetThreshold);
+            localStorage.setItem('prefTheme', studentData.theme);
+
+            applyTheme();
+            renderDashboardCards();
+            closePreferencesModal();
+        });
+
+        function applyTheme() {
+            document.body.classList.remove('light-mode', 'oled-mode');
+            if (studentData.theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else if (studentData.theme === 'oled') {
+                document.body.classList.add('oled-mode');
+            }
+        }
+
+        function openNotificationsModal() {
+            document.getElementById('profileDropdown').classList.remove('active');
+            renderNotifications();
+            document.getElementById('notificationsModal').classList.add('active');
+        }
+
+        function closeNotificationsModal() {
+            document.getElementById('notificationsModal').classList.remove('active');
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notificationsContainer');
+            const unreadBadge = document.getElementById('menuNotifBadge');
+            const unreadDot = document.getElementById('unreadDot');
+            const unreadText = document.getElementById('unreadCountText');
+
+            const unreadCount = studentData.notifications.filter(n => !n.read).length;
+
+            if (unreadCount > 0) {
+                unreadBadge.innerText = unreadCount;
+                unreadBadge.style.display = 'inline-block';
+                unreadDot.classList.add('active');
+                unreadText.innerText = `${unreadCount} Unread Alert${unreadCount > 1 ? 's' : ''}`;
+            } else {
+                unreadBadge.style.display = 'none';
+                unreadDot.classList.remove('active');
+                unreadText.innerText = `0 Unread Alerts`;
+            }
+
+            let notifHTML = "";
+            studentData.notifications.forEach((item, index) => {
+                let iconClass = item.type === "alert" ? "alert" : "academic";
+                let iconSvg = item.type === "alert" 
+                    ? `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+                    : `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>`;
+
+                notifHTML += `
+                    <div class="notif-item ${item.read ? '' : 'unread'}" onclick="markNotificationRead(${index})">
+                        <div class="notif-icon ${iconClass}">${iconSvg}</div>
+                        <div>
+                            <div class="notif-title">${item.title}</div>
+                            <div class="notif-desc">${item.desc}</div>
+                            <div class="notif-time">${item.time}</div>
+                        </div>
+                        ${!item.read ? '<span class="unread-indicator"></span>' : ''}
+                    </div>
+                `;
+            });
+
+            container.innerHTML = notifHTML;
+        }
+
+        function markNotificationRead(index) {
+            studentData.notifications[index].read = true;
+            renderNotifications();
+        }
+
+        function markAllNotificationsRead() {
+            studentData.notifications.forEach(n => n.read = true);
+            renderNotifications();
+        }
+
+        const studentData = {
+            name: localStorage.getItem('userName') || "Sunil",
+            id: localStorage.getItem('userId') || "ST10294",
+            dept: "Computer and Communication Engineering",
+            section: "Sec A",
+            email: "sunil@college.edu",
+            targetThreshold: parseInt(localStorage.getItem('prefTarget')) || 75,
+            theme: localStorage.getItem('prefTheme') || 'dark',
+            notifications: [
+                { id: 1, type: "alert", title: "Low Attendance Warning", desc: "Your Java Programming attendance is currently at 69%, which is below your target threshold.", time: "10 mins ago", read: false },
+                { id: 2, type: "academic", title: "Timetable Rescheduled", desc: "Computer Science Section activities updated for tomorrow.", time: "2 hours ago", read: false }
+            ],
+            subjects: [
+                { name: "Operating Systems", attended: 39, total: 50 },
+                { name: "DBMS", attended: 45.5, total: 50 },
+                { name: "Java", attended: 34.5, total: 50 }
+            ],
+            weeklyHistory: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                overallTrend: [88, 86, 85, 81, 83, 82],
+                criticalTrend: [82, 78, 72, 68, 65, 69]
+            },
+            historyLogs: [
+                { date: "2026-03-26", subject: "Java", time: "09:00 AM - 10:00 AM", faculty: "Prof. FAC2049", status: "Absent" },
+                { date: "2026-03-25", subject: "DBMS", time: "11:15 AM - 12:15 PM", faculty: "Dr. Sharma", status: "Present" },
+                { date: "2026-03-25", subject: "Operating Systems", time: "10:00 AM - 11:00 AM", faculty: "Prof. Arunkumar", status: "Present" },
+                { date: "2026-03-24", subject: "Java", time: "09:00 AM - 10:00 AM", faculty: "Prof. FAC2049", status: "Present" }
+            ]
+        };
+
+        function updateProfileUI() {
+            const initial = studentData.name.charAt(0);
+            document.getElementById("studentGreeting").innerText = `Welcome ${studentData.name}`;
+            document.getElementById("studentChip").innerHTML = `<span class="status-dot"></span> ${studentData.id} • ${studentData.dept}`;
+            
+            document.getElementById("btnNameInline").innerText = studentData.name;
+            document.getElementById("btnRoleInline").innerText = `${studentData.section}`;
+            document.getElementById("menuName").innerText = studentData.name;
+            document.getElementById("menuId").innerText = `${studentData.id} • Student`;
+            document.getElementById("navAvatar").innerText = initial;
+            document.getElementById("bannerAvatar").innerText = initial;
+        }
+
+        function renderDashboardCards() {
+            let totalAttended = 0;
+            let totalClasses = 0;
+            let criticalSubject = null;
+            let gridHTML = "";
+
+            studentData.subjects.forEach(sub => {
+                totalAttended += sub.attended;
+                totalClasses += sub.total;
+                const pct = Math.round((sub.attended / sub.total) * 100);
+                const isRisk = pct < studentData.targetThreshold;
+
+                if (isRisk) criticalSubject = { ...sub, pct };
+
+                const textClass = isRisk ? "text-danger" : "text-success";
+                const bgClass = isRisk ? "bg-danger" : "bg-success";
+                const badge = isRisk ? `
+                    <div class="badge-danger">
+                        <svg width="14" height="14" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
+                        Below ${studentData.targetThreshold}% Target
+                    </div>` : "";
+
+                gridHTML += `
+                    <div class="metric-card" ${isRisk ? 'style="border-color: rgba(239, 68, 68, 0.4);"' : ''}>
+                        <div class="card-header-row"><span class="card-label">${sub.name}</span></div>
+                        <div class="metric-value ${textClass}">${pct}%</div>
+                        <div class="progress-bar"><div class="progress-fill ${bgClass}" style="width: ${pct}%;"></div></div>
+                        ${badge}
+                    </div>
+                `;
+            });
+
+            const overallPct = Math.round((totalAttended / totalClasses) * 100);
+            document.getElementById("overallVal").innerText = `${overallPct}%`;
+            document.getElementById("circleStroke").setAttribute("stroke-dasharray", `${overallPct}, 100`);
+            document.getElementById("subjectGrid").innerHTML = gridHTML;
+
+            if (criticalSubject) {
+                const T = studentData.targetThreshold;
+                const needed = Math.ceil(((T * criticalSubject.total) - (100 * criticalSubject.attended)) / (100 - T));
+                
+                document.getElementById("alertSection").innerHTML = `
+                    <div class="alert-box">
+                        <div class="alert-info">
+                            <div class="alert-icon">
+                                <svg width="26" height="26" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                            </div>
+                            <div>
+                                <div class="alert-title">Warning: ${criticalSubject.name} attendance is below ${T}%</div>
+                                <div class="alert-desc">Immediate recovery required for end-semester exam eligibility.</div>
+                            </div>
+                        </div>
+                        <div class="prediction-badge">Prediction: Attend Next ${needed} Classes</div>
+                    </div>
+                `;
+            } else {
+                document.getElementById("alertSection").innerHTML = "";
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            applyTheme();
+            updateProfileUI();
+            renderDashboardCards();
+            renderNotifications();
+            renderHistoryTable(studentData.historyLogs);
+
+            const ctx = document.getElementById('trendChart').getContext('2d');
+            const overallGrad = ctx.createLinearGradient(0, 0, 0, 300);
+            overallGrad.addColorStop(0, 'rgba(16, 185, 129, 0.35)');
+            overallGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            const javaGrad = ctx.createLinearGradient(0, 0, 0, 300);
+            javaGrad.addColorStop(0, 'rgba(239, 68, 68, 0.25)');
+            javaGrad.addColorStop(1, 'rgba(239, 68, 68, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: studentData.weeklyHistory.labels,
+                    datasets: [
+                        {
+                            label: 'Overall Trend (%)',
+                            data: studentData.weeklyHistory.overallTrend,
+                            borderColor: '#10b981',
+                            backgroundColor: overallGrad,
+                            borderWidth: 3.5,
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#10b981',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        },
+                        {
+                            label: 'Java (%)',
+                            data: studentData.weeklyHistory.criticalTrend,
+                            borderColor: '#ef4444',
+                            backgroundColor: javaGrad,
+                            borderWidth: 2.5,
+                            borderDash: [6, 6],
+                            fill: true,
+                            tension: 0.4,
+                            pointBackgroundColor: '#ef4444',
+                            pointBorderColor: '#ffffff',
+                            pointBorderWidth: 2,
+                            pointRadius: 6
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 50, max: 100,
+                            ticks: { color: '#94a3b8', callback: function(val) { return val + '%'; } },
+                            grid: { color: 'rgba(255, 255, 255, 0.04)' }
+                        },
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        });
+
+        function renderHistoryTable(logs) {
+            const tableBody = document.getElementById("historyTableBody");
+            let rowsHTML = "";
+
+            logs.forEach(log => {
+                let badgeHTML = log.status === "Present" ? `<span class="badge-present">Present</span>` :
+                                log.status === "Absent" ? `<span class="badge-absent">Absent</span>` :
+                                `<span class="badge-od">On Duty</span>`;
+
+                rowsHTML += `
+                    <tr>
+                        <td style="color: var(--text-main);">${log.date}</td>
+                        <td style="color: #60a5fa; font-weight: 700;">${log.subject}</td>
+                        <td style="color: var(--text-muted);">${log.time}</td>
+                        <td style="color: var(--text-muted);">${log.faculty}</td>
+                        <td>${badgeHTML}</td>
+                    </tr>
+                `;
+            });
+
+            tableBody.innerHTML = rowsHTML;
+        }
+
+        function filterHistory() {
+            const selectedSubject = document.getElementById("subjectFilter").value;
+            const query = document.getElementById("searchInput").value.toLowerCase();
+
+            let filtered = studentData.historyLogs;
+
+            if (selectedSubject !== "ALL") {
+                filtered = filtered.filter(log => log.subject === selectedSubject);
+            }
+
+            if (query) {
+                filtered = filtered.filter(log => 
+                    log.subject.toLowerCase().includes(query) || 
+                    log.status.toLowerCase().includes(query) ||
+                    log.date.includes(query)
+                );
+            }
+
+            renderHistoryTable(filtered);
+        }
+    </script>
+</body>
+</html>

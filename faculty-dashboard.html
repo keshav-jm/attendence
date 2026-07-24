@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Academic Portal - Faculty Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <style>
+        :root {
+            --bg-dark: #080c14;
+            --card-bg: rgba(15, 23, 42, 0.75);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #3b82f6;
+            --primary-glow: rgba(59, 130, 246, 0.35);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --danger: #ef4444;
+            --danger-glow: rgba(239, 68, 68, 0.2);
+            --warning: #f59e0b;
+        }
+
+        body.light-mode {
+            --bg-dark: #f1f5f9;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --card-border: rgba(0, 0, 0, 0.1);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            background-image: radial-gradient(circle at 50% -10%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+        }
+
+        body.oled-mode {
+            --bg-dark: #000000;
+            --card-bg: rgba(10, 10, 10, 0.95);
+            --card-border: rgba(255, 255, 255, 0.12);
+            --text-main: #ffffff;
+            --text-muted: #a1a1aa;
+            background-image: none;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            background-image: 
+                radial-gradient(circle at 50% -10%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 40%);
+            background-attachment: fixed;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Navbar Header */
+        .navbar {
+            background: rgba(8, 12, 20, 0.85);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 3rem;
+            height: 76px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        body.light-mode .navbar { background: rgba(255, 255, 255, 0.85); }
+
+        .brand {
+            font-size: 1.35rem;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            letter-spacing: -0.03em;
+        }
+
+        .brand-icon {
+            width: 38px;
+            height: 38px;
+            background: linear-gradient(135deg, #3b82f6, #6366f1);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px var(--primary-glow);
+        }
+
+        .brand span { color: var(--primary); }
+
+        .nav-links { display: flex; align-items: center; gap: 1.25rem; }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.25rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+
+        .nav-link.active {
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            background: rgba(59, 130, 246, 0.12);
+            color: var(--text-main);
+        }
+
+        /* Profile Dropdown & Badge */
+        .profile-menu-container { position: relative; }
+
+        .profile-btn {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 0.35rem 1rem 0.35rem 0.35rem;
+            border-radius: 999px; cursor: pointer; transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .profile-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(59, 130, 246, 0.4);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+        }
+
+        .avatar-wrapper {
+            position: relative; padding: 2px;
+            background: linear-gradient(135deg, #10b981, #3b82f6, #6366f1);
+            border-radius: 50%;
+        }
+
+        .avatar-circle {
+            width: 36px; height: 36px; border-radius: 50%; background: #0b0f17;
+            color: #ffffff; font-weight: 800; font-size: 0.95rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .profile-meta-text { display: flex; flex-direction: column; text-align: left; }
+        .profile-name-inline { font-size: 0.88rem; font-weight: 700; color: var(--text-main); line-height: 1.2; }
+        .profile-role-inline { font-size: 0.72rem; color: #10b981; font-weight: 700; }
+
+        .nav-unread-dot {
+            position: absolute; top: 0; right: 0; width: 10px; height: 10px;
+            background: var(--danger); border-radius: 50%; border: 2px solid var(--bg-dark);
+            box-shadow: 0 0 8px var(--danger); display: none;
+        }
+
+        .nav-unread-dot.active { display: block; }
+
+        .profile-dropdown {
+            position: absolute; top: calc(100% + 12px); right: 0; width: 270px;
+            background: rgba(11, 15, 25, 0.92); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;
+            padding: 0.75rem; box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.8);
+            display: none; flex-direction: column; gap: 0.35rem; z-index: 200;
+        }
+
+        body.light-mode .profile-dropdown { background: rgba(255, 255, 255, 0.95); }
+        .profile-dropdown.active { display: flex; }
+
+        .dropdown-user-banner {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(59, 130, 246, 0.15));
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px;
+            padding: 1rem; display: flex; align-items: center; gap: 0.85rem; margin-bottom: 0.35rem;
+        }
+
+        .banner-avatar {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, #10b981, #3b82f6); color: #ffffff;
+            font-size: 1.1rem; font-weight: 800; display: flex; align-items: center; justify-content: center;
+        }
+
+        .dropdown-name { font-size: 0.95rem; font-weight: 800; color: var(--text-main); }
+        .dropdown-role { font-size: 0.75rem; color: #34d399; font-weight: 700; margin-top: 1px; }
+
+        .dropdown-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.7rem 0.9rem; color: var(--text-muted); text-decoration: none;
+            font-size: 0.88rem; font-weight: 600; border-radius: 10px; transition: all 0.25s ease; cursor: pointer;
+        }
+
+        .dropdown-item-content { display: flex; align-items: center; gap: 0.75rem; }
+        .dropdown-item:hover { background: rgba(255, 255, 255, 0.06); color: var(--text-main); transform: translateX(4px); }
+
+        .notif-badge-pill { background: var(--danger); color: white; font-size: 0.7rem; font-weight: 800; padding: 0.15rem 0.5rem; border-radius: 999px; }
+        .dropdown-item.logout { color: var(--danger); border-top: 1px solid rgba(255, 255, 255, 0.06); margin-top: 0.35rem; padding-top: 0.85rem; }
+
+        /* Dashboard Main Layout */
+        .dashboard-container { max-width: 1200px; margin: 2.5rem auto; padding: 0 1.5rem; }
+        .header-banner { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; }
+        .greeting { font-size: 2.25rem; font-weight: 800; letter-spacing: -0.03em; background: linear-gradient(135deg, #ffffff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .user-chip { background: rgba(255, 255, 255, 0.04); border: 1px solid var(--card-border); padding: 0.6rem 1.2rem; border-radius: 999px; font-size: 0.85rem; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 0.6rem; }
+        .status-dot { width: 8px; height: 8px; background-color: var(--primary); border-radius: 50%; box-shadow: 0 0 10px var(--primary); }
+
+        .metrics-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 2rem; }
+        .metric-card { background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--card-border); border-radius: 20px; padding: 1.75rem; transition: all 0.3s ease; }
+        .card-label { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
+        .metric-value { font-size: 2.75rem; font-weight: 800; margin: 0.5rem 0; }
+        .card-desc { font-size: 0.85rem; color: var(--text-muted); }
+
+        /* Roster Card Header Buttons */
+        .table-card { background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--card-border); border-radius: 24px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); }
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .section-title { font-size: 1.25rem; font-weight: 700; color: var(--text-main); }
+
+        .btn-add-student {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white; border: none; padding: 0.65rem 1.25rem;
+            border-radius: 12px; font-weight: 700; font-size: 0.88rem;
+            cursor: pointer; box-shadow: 0 4px 12px var(--primary-glow);
+            transition: all 0.25s ease;
+        }
+
+        .btn-add-student:hover { transform: translateY(-2px); box-shadow: 0 6px 18px var(--primary-glow); }
+
+        .attendance-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .attendance-table th { color: var(--text-muted); font-size: 0.8rem; font-weight: 700; text-transform: uppercase; padding: 0.88rem 1rem; border-bottom: 1px solid var(--card-border); }
+        .attendance-table td { padding: 1.1rem 1rem; font-size: 0.95rem; border-bottom: 1px solid rgba(255, 255, 255, 0.03); vertical-align: middle; }
+
+        .student-info { display: flex; align-items: center; gap: 0.75rem; }
+        .avatar { width: 36px; height: 36px; border-radius: 10px; background: rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: center; font-weight: 700; color: var(--primary); }
+
+        .badge-status { padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; }
+        .badge-normal { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-risk { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+        .student-sub-info { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* Action Buttons */
+        .action-btn-group { display: flex; gap: 0.5rem; justify-content: flex-end; align-items: center; }
+
+        .btn-toggle { padding: 0.45rem 0.85rem; border-radius: 8px; font-size: 0.82rem; font-weight: 700; border: 1px solid var(--card-border); cursor: pointer; transition: all 0.2s ease; }
+        .btn-present { background: rgba(16, 185, 129, 0.12); color: #34d399; border-color: rgba(16, 185, 129, 0.3); }
+        .btn-present:hover { background: #10b981; color: white; }
+        .btn-absent { background: rgba(239, 68, 68, 0.12); color: #fca5a5; border-color: rgba(239, 68, 68, 0.3); }
+        .btn-absent:hover { background: #ef4444; color: white; }
+
+        .btn-icon-action {
+            width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--card-border);
+            background: rgba(255, 255, 255, 0.05); color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-icon-action:hover { background: rgba(255, 255, 255, 0.12); color: var(--text-main); }
+        .btn-icon-action.delete:hover { background: rgba(239, 68, 68, 0.2); color: var(--danger); border-color: rgba(239, 68, 68, 0.4); }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(8, 12, 20, 0.85);
+            backdrop-filter: blur(8px); display: flex; align-items: center;
+            justify-content: center; z-index: 300; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+
+        .modal-card {
+            background: rgba(15, 23, 42, 0.95); border: 1px solid var(--card-border);
+            border-radius: 24px; padding: 2.5rem; max-width: 540px; width: 100%;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7); transform: translateY(20px);
+            transition: transform 0.3s ease; max-height: 90vh; display: flex; flex-direction: column; overflow-y: auto;
+        }
+
+        body.light-mode .modal-card { background: #ffffff; }
+        .modal-overlay.active .modal-card { transform: translateY(0); }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .modal-title { font-size: 1.35rem; font-weight: 800; color: var(--text-main); }
+        .modal-close { background: transparent; border: none; color: var(--text-muted); cursor: pointer; font-size: 1.2rem; }
+
+        .form-group { margin-bottom: 1.1rem; }
+        .form-label { display: block; font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 0.35rem; text-transform: uppercase; }
+        .form-input, .form-select { width: 100%; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--card-border); border-radius: 10px; padding: 0.75rem 1rem; color: var(--text-main); font-size: 0.92rem; outline: none; }
+        .form-select option { background: #0f172a; color: #ffffff; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+        .modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+        .btn-save { flex: 1; background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; border: none; padding: 0.85rem; border-radius: 12px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 12px var(--primary-glow); }
+        .btn-cancel { flex: 1; background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid var(--card-border); padding: 0.85rem; border-radius: 12px; font-weight: 700; cursor: pointer; }
+
+        .notif-modal-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+        .btn-mark-all { background: transparent; border: none; color: var(--primary); font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+
+        .notif-list { overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; padding-right: 0.25rem; }
+        .notif-item { background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); border-radius: 14px; padding: 1rem; display: flex; align-items: flex-start; gap: 1rem; cursor: pointer; transition: all 0.2s ease; position: relative; }
+        .notif-item.unread { border-color: rgba(59, 130, 246, 0.3); background: rgba(59, 130, 246, 0.05); }
+
+        .notif-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .notif-icon.alert { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+        .notif-icon.academic { background: rgba(59, 130, 246, 0.15); color: var(--primary); }
+
+        .notif-title { font-size: 0.9rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.2rem; }
+        .notif-desc { font-size: 0.82rem; color: var(--text-muted); line-height: 1.4; margin-bottom: 0.4rem; }
+        .notif-time { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; }
+
+        .chart-card { background: var(--card-bg); backdrop-filter: blur(16px); border: 1px solid var(--card-border); border-radius: 24px; padding: 2rem; box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5); }
+        .chart-wrapper { position: relative; height: 300px; width: 100%; }
+        .res-row { display: flex; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.92rem; }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="brand">
+            <div class="brand-icon">
+                <svg width="20" height="20" fill="none" stroke="white" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l9-5-9-5-9 5 9 5z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0112 20.055a11.952 11.952 0 01-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"/></svg>
+            </div>
+            Academic<span>Portal</span>
+        </div>
+        
+        <div class="nav-links">
+            <a href="faculty-dashboard.html" class="nav-link active">Faculty Dashboard</a>
+            
+            <div class="profile-menu-container">
+                <button class="profile-btn" onclick="toggleProfileMenu()">
+                    <div class="avatar-wrapper">
+                        <div class="avatar-circle" id="navAvatar">P</div>
+                        <span class="nav-unread-dot" id="unreadDot"></span>
+                    </div>
+                    <div class="profile-meta-text">
+                        <span class="profile-name-inline" id="btnNameInline">Prof. Arunkumar</span>
+                        <span class="profile-role-inline" id="btnRoleInline">Faculty • CSE</span>
+                    </div>
+                    <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
+                </button>
+                
+                <div class="profile-dropdown" id="profileDropdown">
+                    <div class="dropdown-user-banner">
+                        <div class="banner-avatar" id="bannerAvatar">P</div>
+                        <div>
+                            <div class="dropdown-name" id="menuName">Prof. Arunkumar</div>
+                            <div class="dropdown-role" id="menuId">FAC2049 • Faculty</div>
+                        </div>
+                    </div>
+
+                    <a class="dropdown-item" onclick="openProfileModal()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                            Profile Settings
+                        </div>
+                    </a>
+                    <a class="dropdown-item" onclick="openPreferencesModal()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            Preferences
+                        </div>
+                    </a>
+                    <a class="dropdown-item" onclick="openNotificationsModal()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            Notifications
+                        </div>
+                        <span class="notif-badge-pill" id="menuNotifBadge">0</span>
+                    </a>
+                    <a class="dropdown-item logout" onclick="logout()">
+                        <div class="dropdown-item-content">
+                            <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            Log Out
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Faculty Profile Modal -->
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Faculty Profile Settings</div>
+                <button class="modal-close" onclick="closeProfileModal()">✕</button>
+            </div>
+            <form id="editProfileForm">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="editName" class="form-input" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Faculty Staff ID</label>
+                        <input type="text" id="editId" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Designation</label>
+                        <input type="text" id="editDesignation" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department / School</label>
+                    <input type="text" id="editDept" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Institutional Email</label>
+                    <input type="email" id="editEmail" class="form-input" required>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeProfileModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ADD STUDENT FORM & MODAL -->
+    <div class="modal-overlay" id="addStudentModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Add New Student</div>
+                <button class="modal-close" onclick="closeAddStudentModal()">✕</button>
+            </div>
+            <form id="addStudentForm">
+                <div class="form-group">
+                    <label class="form-label">Student Full Name</label>
+                    <input type="text" id="addStudentName" class="form-input" placeholder="e.g., Rajesh Kannan" required>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Roll No / Register ID</label>
+                        <input type="text" id="addStudentId" class="form-input" placeholder="e.g., ST10297" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" id="addStudentEmail" class="form-input" placeholder="student@college.edu" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <input type="text" id="addStudentDept" class="form-input" placeholder="e.g., Computer & Communication Engineering" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Academic Year</label>
+                        <select id="addStudentYear" class="form-select" required>
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year" selected>2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Semester</label>
+                        <select id="addStudentSemester" class="form-select" required>
+                            <option value="Sem 1">Sem 1</option>
+                            <option value="Sem 2">Sem 2</option>
+                            <option value="Sem 3">Sem 3</option>
+                            <option value="Sem 4" selected>Sem 4</option>
+                            <option value="Sem 5">Sem 5</option>
+                            <option value="Sem 6">Sem 6</option>
+                            <option value="Sem 7">Sem 7</option>
+                            <option value="Sem 8">Sem 8</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Classes Attended</label>
+                        <input type="number" id="addStudentAttended" class="form-input" value="40" min="0" step="0.5" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Classes</label>
+                        <input type="number" id="addStudentTotal" class="form-input" value="50" min="1" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeAddStudentModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Add Student Record</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- EDIT STUDENT FORM & MODAL -->
+    <div class="modal-overlay" id="editStudentModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Update Student Details</div>
+                <button class="modal-close" onclick="closeEditStudentModal()">✕</button>
+            </div>
+            <form id="editStudentForm">
+                <input type="hidden" id="editStudentIndex">
+                
+                <div class="form-group">
+                    <label class="form-label">Student Full Name</label>
+                    <input type="text" id="editStudentName" class="form-input" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Roll No / Register ID</label>
+                        <input type="text" id="editStudentId" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" id="editStudentEmail" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <input type="text" id="editStudentDept" class="form-input" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Academic Year</label>
+                        <select id="editStudentYear" class="form-select" required>
+                            <option value="1st Year">1st Year</option>
+                            <option value="2nd Year">2nd Year</option>
+                            <option value="3rd Year">3rd Year</option>
+                            <option value="4th Year">4th Year</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Semester</label>
+                        <select id="editStudentSemester" class="form-select" required>
+                            <option value="Sem 1">Sem 1</option>
+                            <option value="Sem 2">Sem 2</option>
+                            <option value="Sem 3">Sem 3</option>
+                            <option value="Sem 4">Sem 4</option>
+                            <option value="Sem 5">Sem 5</option>
+                            <option value="Sem 6">Sem 6</option>
+                            <option value="Sem 7">Sem 7</option>
+                            <option value="Sem 8">Sem 8</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Classes Attended</label>
+                        <input type="number" id="editStudentAttended" class="form-input" step="0.5" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Classes</label>
+                        <input type="number" id="editStudentTotal" class="form-input" min="1" required>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeEditStudentModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Updates</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preferences Modal -->
+    <div class="modal-overlay" id="preferencesModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Faculty Preferences</div>
+                <button class="modal-close" onclick="closePreferencesModal()">✕</button>
+            </div>
+            <form id="preferencesForm">
+                <div class="form-group">
+                    <label class="form-label">Low Attendance Risk Trigger (%)</label>
+                    <div class="slider-container">
+                        <input type="range" id="prefTarget" min="60" max="90" step="1" class="form-input" oninput="document.getElementById('targetValDisplay').innerText = this.value + '%'">
+                        <span class="slider-val" id="targetValDisplay">75%</span>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Dashboard Theme Mode</label>
+                    <select id="prefTheme" class="form-select">
+                        <option value="dark">Dark Glass (Default)</option>
+                        <option value="light">Light Mode</option>
+                        <option value="oled">OLED Black Mode</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closePreferencesModal()">Cancel</button>
+                    <button type="submit" class="btn-save">Save Preferences</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notifications Modal -->
+    <div class="modal-overlay" id="notificationsModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title">Faculty Notifications</div>
+                <button class="modal-close" onclick="closeNotificationsModal()">✕</button>
+            </div>
+            <div class="notif-modal-actions">
+                <span style="font-size: 0.85rem; color: var(--text-muted);" id="unreadCountText">0 Unread Alerts</span>
+                <button class="btn-mark-all" onclick="markAllNotificationsRead()">Mark all as read</button>
+            </div>
+            <div class="notif-list" id="notificationsContainer"></div>
+        </div>
+    </div>
+
+    <!-- Result Summary Modal -->
+    <div class="modal-overlay" id="resultModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <div class="modal-title" style="display:flex; align-items:center; gap:0.5rem;">
+                    <svg width="24" height="24" fill="none" stroke="#10b981" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    Attendance Record Saved
+                </div>
+                <button class="modal-close" onclick="closeResultModal()">✕</button>
+            </div>
+            <div style="background: rgba(255,255,255,0.03); border-radius: 16px; padding: 1.25rem; border: 1px solid var(--card-border); margin-bottom: 1.5rem;">
+                <div class="res-row">
+                    <span style="color: var(--text-muted);">Student Name:</span>
+                    <strong id="resName" style="color: var(--text-main);">-</strong>
+                </div>
+                <div class="res-row">
+                    <span style="color: var(--text-muted);">Action Recorded:</span>
+                    <strong id="resAction" style="color: #60a5fa;">-</strong>
+                </div>
+                <div class="res-row">
+                    <span style="color: var(--text-muted);">New Attendance Ratio:</span>
+                    <strong id="resRatio" style="color: var(--text-main);">-</strong>
+                </div>
+                <div class="res-row">
+                    <span style="color: var(--text-muted);">New Percentage:</span>
+                    <strong id="resPct" style="font-size: 1.1rem;">-</strong>
+                </div>
+                <div class="res-row">
+                    <span style="color: var(--text-muted);">Target Status:</span>
+                    <span id="resStatus">-</span>
+                </div>
+            </div>
+            <button class="btn-save" style="width: 100%;" onclick="closeResultModal()">Confirm & Close</button>
+        </div>
+    </div>
+
+    <!-- Main Dashboard Container -->
+    <main class="dashboard-container">
+        <div class="header-banner">
+            <h1 class="greeting" id="facultyGreeting">Welcome, Professor</h1>
+            <div class="user-chip" id="facultyChip">
+                <span class="status-dot"></span> FAC2049 • Department of CSE
+            </div>
+        </div>
+
+        <div class="metrics-grid" id="metricsGrid"></div>
+
+        <div class="table-card">
+            <div class="section-header">
+                <div class="section-title">Class Roster & Attendance - Java Programming</div>
+                <button class="btn-add-student" onclick="openAddStudentModal()">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                    Add Student
+                </button>
+            </div>
+
+            <table class="attendance-table">
+                <thead>
+                    <tr>
+                        <th>Student Name & Info</th>
+                        <th>Roll No / ID</th>
+                        <th>Academic Level</th>
+                        <th>Attended / Total</th>
+                        <th>Current %</th>
+                        <th>Status</th>
+                        <th style="text-align: right;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="rosterTableBody"></tbody>
+            </table>
+        </div>
+
+        <div class="chart-card">
+            <div class="section-header">
+                <div class="section-title">Course Attendance Average Trends</div>
+            </div>
+            <div class="chart-wrapper">
+                <canvas id="facultyChart"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ROUTE GUARD
+        (function checkAuth() {
+            const isLoggedIn = localStorage.getItem('isLoggedIn');
+            const userRole = localStorage.getItem('userRole');
+
+            if (isLoggedIn === 'false') {
+                window.location.href = 'login.html';
+                return;
+            }
+            if (userRole === 'student') {
+                window.location.href = 'student-dashboard.html';
+                return;
+            }
+        })();
+
+        function toggleProfileMenu() {
+            document.getElementById('profileDropdown').classList.toggle('active');
+        }
+
+        window.addEventListener('click', function(e) {
+            const container = document.querySelector('.profile-menu-container');
+            if (container && !container.contains(e.target)) {
+                document.getElementById('profileDropdown').classList.remove('active');
+            }
+        });
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        function openProfileModal() {
+            document.getElementById('profileDropdown').classList.remove('active');
+            document.getElementById('editName').value = facultyData.name;
+            document.getElementById('editId').value = facultyData.id;
+            document.getElementById('editDesignation').value = facultyData.designation;
+            document.getElementById('editDept').value = facultyData.dept;
+            document.getElementById('editEmail').value = facultyData.email;
+            document.getElementById('profileModal').classList.add('active');
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.remove('active');
+        }
+
+        document.getElementById('editProfileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            facultyData.name = document.getElementById('editName').value.trim();
+            facultyData.id = document.getElementById('editId').value.trim().toUpperCase();
+            facultyData.designation = document.getElementById('editDesignation').value.trim();
+            facultyData.dept = document.getElementById('editDept').value.trim();
+            facultyData.email = document.getElementById('editEmail').value.trim();
+
+            localStorage.setItem('userId', facultyData.id);
+            localStorage.setItem('userName', facultyData.name);
+
+            updateProfileUI();
+            closeProfileModal();
+        });
+
+        // ADD STUDENT LOGIC
+        function openAddStudentModal() {
+            document.getElementById('addStudentForm').reset();
+            document.getElementById('addStudentModal').classList.add('active');
+        }
+
+        function closeAddStudentModal() {
+            document.getElementById('addStudentModal').classList.remove('active');
+        }
+
+        document.getElementById('addStudentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const newStudent = {
+                id: document.getElementById('addStudentId').value.trim().toUpperCase(),
+                name: document.getElementById('addStudentName').value.trim(),
+                email: document.getElementById('addStudentEmail').value.trim(),
+                dept: document.getElementById('addStudentDept').value.trim(),
+                year: document.getElementById('addStudentYear').value,
+                semester: document.getElementById('addStudentSemester').value,
+                attended: parseFloat(document.getElementById('addStudentAttended').value),
+                total: parseInt(document.getElementById('addStudentTotal').value),
+                markedToday: false
+            };
+
+            facultyData.students.push(newStudent);
+            renderDashboard();
+            closeAddStudentModal();
+        });
+
+        // EDIT STUDENT LOGIC
+        function openEditStudentModal(index) {
+            const student = facultyData.students[index];
+            document.getElementById('editStudentIndex').value = index;
+            document.getElementById('editStudentName').value = student.name;
+            document.getElementById('editStudentId').value = student.id;
+            document.getElementById('editStudentEmail').value = student.email || `${student.id.toLowerCase()}@college.edu`;
+            document.getElementById('editStudentDept').value = student.dept || "Computer & Communication Engineering";
+            document.getElementById('editStudentYear').value = student.year || "2nd Year";
+            document.getElementById('editStudentSemester').value = student.semester || "Sem 4";
+            document.getElementById('editStudentAttended').value = student.attended;
+            document.getElementById('editStudentTotal').value = student.total;
+
+            document.getElementById('editStudentModal').classList.add('active');
+        }
+
+        function closeEditStudentModal() {
+            document.getElementById('editStudentModal').classList.remove('active');
+        }
+
+        document.getElementById('editStudentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const index = parseInt(document.getElementById('editStudentIndex').value);
+            
+            facultyData.students[index].name = document.getElementById('editStudentName').value.trim();
+            facultyData.students[index].id = document.getElementById('editStudentId').value.trim().toUpperCase();
+            facultyData.students[index].email = document.getElementById('editStudentEmail').value.trim();
+            facultyData.students[index].dept = document.getElementById('editStudentDept').value.trim();
+            facultyData.students[index].year = document.getElementById('editStudentYear').value;
+            facultyData.students[index].semester = document.getElementById('editStudentSemester').value;
+            facultyData.students[index].attended = parseFloat(document.getElementById('editStudentAttended').value);
+            facultyData.students[index].total = parseInt(document.getElementById('editStudentTotal').value);
+
+            renderDashboard();
+            closeEditStudentModal();
+        });
+
+        // DELETE STUDENT LOGIC
+        function removeStudent(index) {
+            const student = facultyData.students[index];
+            if (confirm(`Are you sure you want to remove ${student.name} (${student.id}) from the class roster?`)) {
+                facultyData.students.splice(index, 1);
+                renderDashboard();
+            }
+        }
+
+        function openPreferencesModal() {
+            document.getElementById('profileDropdown').classList.remove('active');
+            document.getElementById('prefTarget').value = facultyData.targetThreshold;
+            document.getElementById('targetValDisplay').innerText = facultyData.targetThreshold + '%';
+            document.getElementById('prefTheme').value = facultyData.theme;
+
+            document.getElementById('preferencesModal').classList.add('active');
+        }
+
+        function closePreferencesModal() {
+            document.getElementById('preferencesModal').classList.remove('active');
+        }
+
+        document.getElementById('preferencesForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            facultyData.targetThreshold = parseInt(document.getElementById('prefTarget').value);
+            facultyData.theme = document.getElementById('prefTheme').value;
+
+            localStorage.setItem('prefTarget', facultyData.targetThreshold);
+            localStorage.setItem('prefTheme', facultyData.theme);
+
+            applyTheme();
+            renderDashboard();
+            closePreferencesModal();
+        });
+
+        function applyTheme() {
+            document.body.classList.remove('light-mode', 'oled-mode');
+            if (facultyData.theme === 'light') {
+                document.body.classList.add('light-mode');
+            } else if (facultyData.theme === 'oled') {
+                document.body.classList.add('oled-mode');
+            }
+        }
+
+        function openNotificationsModal() {
+            document.getElementById('profileDropdown').classList.remove('active');
+            renderNotifications();
+            document.getElementById('notificationsModal').classList.add('active');
+        }
+
+        function closeNotificationsModal() {
+            document.getElementById('notificationsModal').classList.remove('active');
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notificationsContainer');
+            const unreadBadge = document.getElementById('menuNotifBadge');
+            const unreadDot = document.getElementById('unreadDot');
+            const unreadText = document.getElementById('unreadCountText');
+
+            const unreadCount = facultyData.notifications.filter(n => !n.read).length;
+
+            if (unreadCount > 0) {
+                unreadBadge.innerText = unreadCount;
+                unreadBadge.style.display = 'inline-block';
+                unreadDot.classList.add('active');
+                unreadText.innerText = `${unreadCount} Unread Alert${unreadCount > 1 ? 's' : ''}`;
+            } else {
+                unreadBadge.style.display = 'none';
+                unreadDot.classList.remove('active');
+                unreadText.innerText = `0 Unread Alerts`;
+            }
+
+            let notifHTML = "";
+            facultyData.notifications.forEach((item, index) => {
+                let iconClass = item.type === "alert" ? "alert" : "academic";
+                let iconSvg = item.type === "alert" 
+                    ? `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`
+                    : `<svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5z"/></svg>`;
+
+                notifHTML += `
+                    <div class="notif-item ${item.read ? '' : 'unread'}" onclick="markNotificationRead(${index})">
+                        <div class="notif-icon ${iconClass}">${iconSvg}</div>
+                        <div>
+                            <div class="notif-title">${item.title}</div>
+                            <div class="notif-desc">${item.desc}</div>
+                            <div class="notif-time">${item.time}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = notifHTML;
+        }
+
+        function markNotificationRead(index) {
+            facultyData.notifications[index].read = true;
+            renderNotifications();
+        }
+
+        function markAllNotificationsRead() {
+            facultyData.notifications.forEach(n => n.read = true);
+            renderNotifications();
+        }
+
+        function closeResultModal() {
+            document.getElementById('resultModal').classList.remove('active');
+        }
+
+        // FACULTY DATASET WITH STUDENT METRICS
+        const facultyData = {
+            name: localStorage.getItem('userName') || "Prof. Arunkumar",
+            id: localStorage.getItem('userId') || "FAC2049",
+            designation: "Assistant Professor",
+            dept: "Department of CSE",
+            email: "arunkumar@college.edu",
+            targetThreshold: parseInt(localStorage.getItem('prefTarget')) || 75,
+            theme: localStorage.getItem('prefTheme') || 'dark',
+            notifications: [
+                { id: 1, type: "alert", title: "Low Attendance Alert", desc: "Student Sunil (ST10294) dropped below 75% target in Java Programming.", time: "15 mins ago", read: false },
+                { id: 2, type: "academic", title: "Register Submission Due", desc: "Submit Section B attendance register before Friday.", time: "3 hours ago", read: false }
+            ],
+            courses: [
+                { id: "CS801", name: "Operating Systems", section: "A", enrolled: 60 },
+                { id: "CS802", name: "Java Programming", section: "B", enrolled: 60 }
+            ],
+            students: [
+                { 
+                    id: "ST10294", name: "Sunil", email: "sunil@college.edu", 
+                    dept: "Computer and Communication Engineering", year: "2nd Year", semester: "Sem 4",
+                    attended: 34.5, total: 50, markedToday: false 
+                },
+                { 
+                    id: "ST10295", name: "Anish Kumar", email: "anish@college.edu", 
+                    dept: "Computer Science Engineering", year: "2nd Year", semester: "Sem 4",
+                    attended: 44, total: 50, markedToday: false 
+                },
+                { 
+                    id: "ST10296", name: "Kavitha M.", email: "kavitha@college.edu", 
+                    dept: "Computer Science Engineering", year: "2nd Year", semester: "Sem 4",
+                    attended: 47, total: 50, markedToday: false 
+                }
+            ],
+            weeklyAverages: {
+                labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+                osAverage: [85, 87, 86, 88, 89, 90],
+                javaAverage: [78, 76, 75, 73, 71, 74]
+            }
+        };
+
+        function updateProfileUI() {
+            const initial = facultyData.name.charAt(0);
+            document.getElementById("facultyGreeting").innerText = `Welcome, ${facultyData.name}`;
+            document.getElementById("facultyChip").innerHTML = `<span class="status-dot"></span> ${facultyData.id} • ${facultyData.dept}`;
+            
+            document.getElementById("btnNameInline").innerText = facultyData.name;
+            document.getElementById("btnRoleInline").innerText = `Faculty • CSE`;
+            document.getElementById("menuName").innerText = facultyData.name;
+            document.getElementById("menuId").innerText = `${facultyData.id} • Faculty`;
+            document.getElementById("navAvatar").innerText = initial;
+            document.getElementById("bannerAvatar").innerText = initial;
+        }
+
+        function renderDashboard() {
+            let alertsCount = 0;
+            facultyData.students.forEach(s => {
+                const pct = Math.round((s.attended / s.total) * 100);
+                if (pct < facultyData.targetThreshold) alertsCount++;
+            });
+
+            const totalCourses = facultyData.courses.length;
+            const totalEnrolled = facultyData.students.length;
+
+            document.getElementById("metricsGrid").innerHTML = `
+                <div class="metric-card">
+                    <div class="card-label">Active Courses</div>
+                    <div class="metric-value" style="color: #60a5fa;">${totalCourses}</div>
+                    <div class="card-desc">${facultyData.courses.map(c => c.name).join(' & ')}</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="card-label">Roster Count</div>
+                    <div class="metric-value" style="color: #10b981;">${totalEnrolled}</div>
+                    <div class="card-desc">Enrolled students in Java Programming</div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="card-label">Low Attendance Alerts</div>
+                    <div class="metric-value" style="color: #ef4444;">${alertsCount}</div>
+                    <div class="card-desc">Students below ${facultyData.targetThreshold}% target</div>
+                </div>
+            `;
+
+            let tableHTML = "";
+            facultyData.students.forEach((student, index) => {
+                const pct = Math.round((student.attended / student.total) * 100);
+                const isRisk = pct < facultyData.targetThreshold;
+                const badge = isRisk 
+                    ? `<span class="badge-status badge-risk">At Risk (&lt;${facultyData.targetThreshold}%)</span>` 
+                    : `<span class="badge-status badge-normal">Healthy</span>`;
+
+                const btnClass = student.markedToday ? "btn-absent" : "btn-present";
+                const btnText = student.markedToday ? "Marked Present (Undo)" : "Mark Present (+1)";
+
+                tableHTML += `
+                    <tr>
+                        <td>
+                            <div class="student-info">
+                                <div class="avatar" style="color: ${isRisk ? "var(--primary)" : "#10b981"};">${student.name.charAt(0)}</div>
+                                <div>
+                                    <strong>${student.name}</strong>
+                                    <div class="student-sub-info">${student.email || 'N/A'} • ${student.dept || 'Engineering'}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="font-weight: 700;">${student.id}</td>
+                        <td style="color: var(--text-muted); font-size: 0.88rem;">${student.year || '2nd Year'} • ${student.semester || 'Sem 4'}</td>
+                        <td style="font-weight: 600;">${student.attended} / ${student.total}</td>
+                        <td style="color: ${isRisk ? "#ef4444" : "#10b981"}; font-weight: 700;">${pct}%</td>
+                        <td>${badge}</td>
+                        <td style="text-align: right;">
+                            <div class="action-btn-group">
+                                <button class="btn-toggle ${btnClass}" onclick="toggleAttendance(${index})">${btnText}</button>
+                                <button class="btn-icon-action" onclick="openEditStudentModal(${index})" title="Edit Details">
+                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 210.3H3v-3.572L16.732 3.732z"/></svg>
+                                </button>
+                                <button class="btn-icon-action delete" onclick="removeStudent(${index})" title="Remove Student">
+                                    <svg width="15" height="15" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById("rosterTableBody").innerHTML = tableHTML;
+        }
+
+        function toggleAttendance(index) {
+            const student = facultyData.students[index];
+            let actionText = "";
+
+            if (!student.markedToday) {
+                student.attended += 1;
+                student.total += 1;
+                student.markedToday = true;
+                actionText = "Marked Present (+1 Class)";
+            } else {
+                student.attended -= 1;
+                student.total -= 1;
+                student.markedToday = false;
+                actionText = "Reverted Attendance Marking";
+            }
+
+            renderDashboard();
+
+            const newPct = Math.round((student.attended / student.total) * 100);
+            const isRisk = newPct < facultyData.targetThreshold;
+
+            document.getElementById("resName").innerText = student.name;
+            document.getElementById("resAction").innerText = actionText;
+            document.getElementById("resRatio").innerText = `${student.attended} / ${student.total} Classes`;
+            document.getElementById("resPct").innerText = `${newPct}%`;
+            document.getElementById("resPct").style.color = isRisk ? "#ef4444" : "#10b981";
+
+            document.getElementById("resStatus").innerHTML = isRisk 
+                ? `<span class="badge-status badge-risk">At Risk (&lt;${facultyData.targetThreshold}%)</span>` 
+                : `<span class="badge-status badge-normal">Healthy (&ge;${facultyData.targetThreshold}%)</span>`;
+
+            document.getElementById("resultModal").classList.add("active");
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            applyTheme();
+            updateProfileUI();
+            renderDashboard();
+            renderNotifications();
+
+            const ctx = document.getElementById('facultyChart').getContext('2d');
+            const osGrad = ctx.createLinearGradient(0, 0, 0, 300);
+            osGrad.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+            osGrad.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
+
+            const javaGrad = ctx.createLinearGradient(0, 0, 0, 300);
+            javaGrad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+            javaGrad.addColorStop(1, 'rgba(16, 185, 129, 0.0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: facultyData.weeklyAverages.labels,
+                    datasets: [
+                        {
+                            label: 'Operating Systems Avg (%)',
+                            data: facultyData.weeklyAverages.osAverage,
+                            borderColor: '#3b82f6',
+                            backgroundColor: osGrad,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Java Programming Avg (%)',
+                            data: facultyData.weeklyAverages.javaAverage,
+                            borderColor: '#10b981',
+                            backgroundColor: javaGrad,
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            min: 50, max: 100,
+                            ticks: { color: '#94a3b8', callback: function(val) { return val + '%'; } },
+                            grid: { color: 'rgba(255, 255, 255, 0.04)' }
+                        },
+                        x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                    },
+                    plugins: { legend: { labels: { color: '#f8fafc' } } }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
